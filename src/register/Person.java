@@ -1,12 +1,15 @@
 package register;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.io.Serializable;
 
 /**
  * register.Person.
  */
-public class Person implements Comparable<Person> {
+public class Person implements Comparable<Person>, Serializable {
+	/**
+	 * 
+	 */
+
 	/** Name of this person. */
 	private String name;
 
@@ -76,9 +79,12 @@ public class Person implements Comparable<Person> {
 	 *         otherwise
 	 */
 	private boolean isValidPhoneNumber(String phoneNumber) {
-		Pattern pattern = Pattern.compile("((\\+|00)\\s?(\\d{3}|\\d)|0)\\s?(\\d{3}\\s?){3}");
-		Matcher matcher = pattern.matcher(phoneNumber);
-		return (matcher.matches());
+//		Pattern pattern = Pattern.compile("((\\+|00)\\s?(\\d{3}|\\d)|0)\\s?(\\d{3}\\s?){3}");
+//		Matcher matcher = pattern.matcher(phoneNumber);
+		
+//		return (matcher.matches());
+		
+		return phoneNumber.matches("((\\+|00)\\s?(\\d{3}|\\d)|0)\\s?(\\d{3}\\s?){3}");
 	}
 
 	/**

@@ -1,9 +1,16 @@
 package register;
 
+import java.io.Serializable;
+import java.util.Arrays;
+
 /**
  * register.Person register.
  */
-public class ArrayRegister implements Register {
+public class ArrayRegister implements Register, Serializable{
+	/**
+	 * 
+	 */
+
 	/** register.Person array. */
 	private Person[] persons;
 
@@ -72,8 +79,9 @@ public class ArrayRegister implements Register {
 		int maxLength = 0;
 		maxLength = persons[0].getName().length();
 		for (int i = 1; i < count; i++) {
-			if (persons[i].getName().length() > persons[i - 1].getName().length()) {
-				maxLength = persons[i].getName().length();
+			int len = persons[i].getName().length();
+			if (len > maxLength) {
+				maxLength = len;
 			}
 		}
 		return maxLength;
@@ -89,8 +97,9 @@ public class ArrayRegister implements Register {
 		int maxLength = 0;
 		maxLength = persons[0].getPhoneNumber().length();
 		for (int i = 1; i < count; i++) {
-			if (persons[i].getPhoneNumber().length() > persons[i - 1].getPhoneNumber().length()) {
-				maxLength = persons[i].getPhoneNumber().length();
+			int len = persons[i].getName().length();
+			if (len > maxLength) {
+				maxLength = len;
 			}
 		}
 		return maxLength;
@@ -159,6 +168,6 @@ public class ArrayRegister implements Register {
 	}
 
 	public void updateList() {
-		// not implemented in ArrayRegister
+		Arrays.sort(persons, 0, count-1);
 	}
 }

@@ -1,12 +1,16 @@
 package register;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-public class ListRegister implements Register, Iterable<Person> {
+public class ListRegister implements Register, Iterable<Person>, Serializable {
 
+	/**
+	 * 
+	 */
 	private List<Person> persons = new ArrayList<Person>();
 
 	@Override
@@ -16,18 +20,18 @@ public class ListRegister implements Register, Iterable<Person> {
 
 	@Override
 	public int getCount() {
-		int count = 0;
-		Iterator<Person> iterator = persons.iterator();
-		while (iterator.hasNext()) {
-			iterator.next();
-			count++;
-		}
-		return count;
+//		int count = 0;
+//		Iterator<Person> iterator = persons.iterator();
+//		while (iterator.hasNext()) {
+//			iterator.next();
+//			count++;
+//		}
+		return persons.size();
 	}
 
 	@Override
 	public int getSize() {
-		return persons.size();
+		return Integer.MAX_VALUE;
 	}
 
 	@Override

@@ -1,6 +1,8 @@
 package register;
 
-public interface Register {
+import java.io.Serializable;
+
+public interface Register extends Serializable{
 
 	/**
 	 * Returns the number of persons in this register.

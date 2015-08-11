@@ -1,9 +1,11 @@
 package register;
 
 import java.io.BufferedReader;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.Formatter;
+import java.io.ObjectOutputStream;
+import static java.lang.System.out;
 
 /**
  * User interface of the application.
@@ -57,11 +59,25 @@ public class ConsoleUI {
 				findInRegister();
 				break;
 			case EXIT:
+				try {
+					save();
+				} catch (IOException e) {
+					e.printStackTrace();
+					out.println("It didnt work");
+				}
 				return;
 			}
 		}
 	}
 
+	private void save() throws IOException{
+		FileOutputStream out = new FileOutputStream("out.bin");
+        ObjectOutputStream s = new ObjectOutputStream(out);
+        s.writeObject(register);
+        s.close();
+	}
+	
+	
 	/**
 	 * Reads input from console entered by user.
 	 * 
@@ -110,23 +126,24 @@ public class ConsoleUI {
 			System.err.println("Register does not contain any persons");
 			return;
 		}
-		StringBuilder builder = new StringBuilder();
-		Formatter formatter = new Formatter(builder);
+		// StringBuilder builder = new StringBuilder();
+
 		int length = register.getCount();
 		int nameLength = register.getMaxLengthName();
 		int numberLength = register.getMaxLengthNumber();
-		formatter.format("%1$2s. %4$s %2$-" + nameLength + "s %4$s %3$-" + numberLength + "s %n", "No", "Name",
+		out.format("%1$2s. %4$s %2$-" + nameLength + "s %4$s %3$-" + numberLength + "s %n", "No", "Name",
 				"Phone Number", "|");
 		for (int i = 0; i < nameLength + numberLength + 9; i++) {
-			formatter.format("%s", "-");
+			out.format("%s", "-");
 		}
-		formatter.format("%n");
+		out.format("%n");
 		for (int i = 0; i < length; i++) {
-			formatter.format("%1$2s. %4$s %2$-" + nameLength + "s %4$s %3$-" + numberLength + "s %n", i + 1,
+
+			out.format("%1$2s. %4$s %2$-" + nameLength + "s %4$s %3$-" + numberLength + "s %n", i + 1,
 					register.getPerson(i).getName(), register.getPerson(i).getPhoneNumber(), "|");
 		}
-		formatter.close();
-		System.out.println(builder);
+		// out.close();
+		// System.out.println(builder);
 	}
 
 	/**
@@ -165,13 +182,17 @@ public class ConsoleUI {
 		Person person = register.getPerson(index - 1);
 		System.out.println(person.toString());
 		System.out.println("What do you want to update?\n1. Name \n2. Phone Number\n3. Name and PhoneNumber\n9. Back");
-		index = readIndex();
+
+		try {
+			index = Integer.parseInt(readLine());
+		} catch (NumberFormatException e) { // if input is not number, return to
+											// menu
+			System.err.println("Wrong format");
+		}
 		String name;
 		String phoneNumber;
-
-		if (index == 0) {
-			return;
-		} else if (index == 1) {
+		switch (index) {
+		case 1:
 			System.out.println("Enter new name: ");
 			name = readLine();
 			if (register.findPersonByBoth(name, person.getPhoneNumber()) != null) {
@@ -179,8 +200,8 @@ public class ConsoleUI {
 				return;
 			}
 			person.setName(name);
-			
-		} else if (index == 2) {
+			break;
+		case 2:
 			System.out.println("Enter new phoneNumber: ");
 			phoneNumber = readLine();
 			if (register.findPersonByBoth(person.getName(), phoneNumber) != null) {
@@ -192,8 +213,9 @@ public class ConsoleUI {
 			} catch (RuntimeException e) {
 				System.err.println("Wrong number format");
 			}
-			
-		} else if (index == 3) {
+			break;
+
+		case 3:
 			System.out.println("Enter new name: ");
 			name = readLine();
 			System.out.println("Enter new phoneNumber: ");
@@ -208,13 +230,13 @@ public class ConsoleUI {
 			} catch (RuntimeException e) {
 				System.err.println("Wrong number format");
 			}
-			
-		} else if (index == 9) {
-			return;
-		}
+			break;
 
-		else {
+		case 9:
+			return;
+		default:
 			System.err.println("Wrong index, choose only 1,2,3 or 9");
+			break;
 		}
 		register.updateList();
 	}
@@ -259,8 +281,10 @@ public class ConsoleUI {
 		Person person = register.getPerson(index - 1);
 		register.removePerson(person);
 	}
+
 	/**
 	 * Reads input and looks if input is in right form
+	 * 
 	 * @return number representation of index
 	 */
 	private int readIndex() {
@@ -273,11 +297,6 @@ public class ConsoleUI {
 			return 0;
 		}
 		if (index > register.getCount() || index < 1) {
-			if ((index < 4 && index > 0) || index == 9) {
-				// if register has less than 3 persons, user must be able
-				// to choose index from 1 to 3 or 9 to go back
-				return index;
-			}
 			System.err.println("Wrong index");
 			return 0;
 		}
