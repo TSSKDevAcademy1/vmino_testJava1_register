@@ -1,11 +1,11 @@
 package register;
 
+import static java.lang.System.out;
+
 import java.io.BufferedReader;
-import java.io.FileOutputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.ObjectOutputStream;
-import static java.lang.System.out;
 
 /**
  * User interface of the application.
@@ -20,21 +20,61 @@ public class ConsoleUI {
 	 * @see readLine()
 	 */
 	private BufferedReader input = new BufferedReader(new InputStreamReader(System.in));
+	private RegisterLoader fileLoader = new FileRegisterLoader();
+	private RegisterLoader databaseLoader = new DatabaseRegisterLoader();
+	private SaveOption saveDestination;
 
 	/**
 	 * Menu options.
 	 */
 	private enum Option {
-		PRINT, ADD, UPDATE, REMOVE, FIND, EXIT
+		PRINT, ADD, UPDATE, REMOVE, FIND, SAVE, EXIT
+	};
+	
+	private enum SaveOption {
+		DATABASE, FILE, NONE
 	};
 
 	/**
 	 * Constructor of register ConsoleUI class.
 	 * 
 	 * @param register
+	 * @throws IOException
+	 * @throws ClassNotFoundException
+	 * @throws FileNotFoundException
 	 */
-	public ConsoleUI(Register register) {
-		this.register = register;
+	public ConsoleUI() {
+		if (databaseLoader.load() == null) {
+			if (fileLoader.load() == null) {
+				this.register = chooseRegister();
+				// addSomePersons
+			} else {
+				if (confirmLoadFile()) {
+					this.register = fileLoader.load();
+					System.out.println("Register was loaded from File.");
+					saveDestination = SaveOption.FILE;
+				} else {
+					this.register = chooseRegister();
+					saveDestination = SaveOption.NONE;
+				}
+
+			}
+		} else {
+			if (confirmLoadDatabase()) {
+				this.register = databaseLoader.load();
+				System.out.println("Register was loaded from Database.");
+				saveDestination = SaveOption.DATABASE;
+			} else {
+				if (fileLoader.load() != null && confirmLoadFile()) {
+					this.register = fileLoader.load();
+					System.out.println("Register was loaded from File.");
+					saveDestination = SaveOption.FILE;
+				} else {
+					this.register = chooseRegister();
+					saveDestination = SaveOption.NONE;
+				}
+			}
+		}
 	}
 
 	/**
@@ -58,26 +98,16 @@ public class ConsoleUI {
 			case FIND:
 				findInRegister();
 				break;
+			case SAVE:
+				chooseSaveDestination();
+				break;
 			case EXIT:
-				try {
-					save();
-				} catch (IOException e) {
-					e.printStackTrace();
-					out.println("It didnt work");
-				}
+				save(saveDestination);
 				return;
 			}
 		}
 	}
 
-	private void save() throws IOException{
-		FileOutputStream out = new FileOutputStream("out.bin");
-        ObjectOutputStream s = new ObjectOutputStream(out);
-        s.writeObject(register);
-        s.close();
-	}
-	
-	
 	/**
 	 * Reads input from console entered by user.
 	 * 
@@ -91,6 +121,124 @@ public class ConsoleUI {
 		} catch (IOException e) {
 			return null;
 		}
+	}
+	
+	private void save(SaveOption option){
+		if(option == SaveOption.DATABASE){
+			saveToDatabase(register);
+		} else if (option == SaveOption.FILE){
+			saveToFile(register);
+		} else {
+			return;
+		}
+	}
+	
+	private void saveToDatabase(Register register) {
+		try {
+			databaseLoader.save(register);
+		} catch (Exception e) {
+			e.printStackTrace();
+			System.err.println("Something gone wrong, register has not been saved to Database.");
+		}
+	}
+
+	private void saveToFile(Register register) {
+		try {
+			fileLoader.save(register);
+		} catch (Exception e) {
+			e.printStackTrace();
+			System.err.println("Something gone wrong, register has not been saved to File.");
+		}
+	}
+
+	private boolean confirmLoadDatabase() {
+		int index = 0;
+		System.out.println("There was found database with register, do you want to load it ?\n1. Yes\n2. No");
+
+		do {
+			try {
+				index = Integer.parseInt(readLine());
+			} catch (NumberFormatException e) {
+				System.err.println("Wrong format, please start again.");
+			}
+			switch (index) {
+			case 1:
+				this.register = databaseLoader.load();
+				return true;
+			case 2:
+				return false;
+			default:
+				System.err.println("Wrong index, please choose again.");
+			}
+		} while (index < 1 && index > 2);
+		return false;
+	}
+
+	private boolean confirmLoadFile() {
+		int index = 0;
+		System.out.println("There was found file with register, do you want to load it ?\n1. Yes\n2. No");
+		do {
+			try {
+				index = Integer.parseInt(readLine());
+			} catch (NumberFormatException e) {
+				System.err.println("Wrong format or index, please start again.");
+			}
+			switch (index) {
+			case 1:
+				this.register = databaseLoader.load();
+				return true;
+			case 2:
+				return false;
+			}
+		} while (index < 1 && index > 2);
+		return false;
+	}
+
+	private void chooseSaveDestination() {
+		int index = 0;
+		System.out
+				.println("Where do you want to save register ?\n1. Database\n2. File\n3. I dont want to save register");
+		do {
+			try {
+				index = Integer.parseInt(readLine());
+			} catch (NumberFormatException e) {
+				System.err.println("Wrong format, please start again.");
+			}
+			switch(index){
+			case 1:
+				saveDestination = SaveOption.DATABASE;
+				return;
+			case 2:
+				saveDestination = SaveOption.FILE;
+				return;
+			case 3:
+				saveDestination = SaveOption.NONE;
+				return;
+			}
+		} while (index < 1 && index > 3);
+	}
+
+	private Register chooseRegister() {
+		int index = 0;
+		System.out.println(
+				"Choose type of register:\n------------------------\n1. ListRegister\n2. ArrayRegister (without sorting)");
+		try {
+			index = Integer.parseInt(readLine());
+		} catch (NumberFormatException e) {
+			System.err.println("Wrong format, please start again.");
+		}
+		switch (index) {
+		case 1:
+			register = new ListRegister();
+			break;
+		case 2:
+			register = new ArrayRegister(20);
+			break;
+		default:
+			System.err.println("Wrong index, please start again.");
+			System.exit(-1);
+		}
+		return register;
 	}
 
 	/**
@@ -301,6 +449,15 @@ public class ConsoleUI {
 			return 0;
 		}
 		return index;
+	}
+
+	private void addSomePersons() {
+		register.addPerson(new Person("Janko Hrasko", "0900123456"));
+		register.addPerson(new Person("Marienka", "+421915151885"));
+		register.addPerson(new Person("Haluska", "00421948119407"));
+		register.addPerson(new Person("Peter Pan", "+421 915 111222"));
+		register.addPerson(new Person("Dobra vila", "00 421 915 144 144"));
+		register.addPerson(new Person("Super Extra Dlhe Meno Na Otestovanie Sirky Tabulky", "00 421 915 144 144"));
 	}
 
 }
