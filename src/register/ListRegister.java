@@ -77,26 +77,22 @@ public class ListRegister implements Register, Iterable<Person>, Serializable {
 
 	@Override
 	public Person findPersonByName(String name) {
-		Iterator<Person> iterator = persons.iterator();
-		while (iterator.hasNext()) {
-			Person p = iterator.next();
-			if (p.getName().equals(name)) {
-				return p;
-			}
-		}
-		return null;
+			return persons.stream().filter(s -> s.getName().equals(name)).findFirst().orElse(null);
 	}
 
 	@Override
 	public Person findPersonByPhoneNumber(String phoneNumber) {
-		Iterator<Person> iterator = persons.iterator();
-		while (iterator.hasNext()) {
-			Person p = iterator.next();
-			if (p.getPhoneNumber().equals(phoneNumber)) {
-				return p;
-			}
-		}
-		return null;
+//		Iterator<Person> iterator = persons.iterator(); OLD ALGORITHM
+//		while (iterator.hasNext()) {
+//			Person p = iterator.next();
+//			if (p.getPhoneNumber().equals(phoneNumber)) {
+//				return p;
+//			}
+//		}
+//		return null; 
+		return persons.stream().filter(s -> s.getPhoneNumber().equals(phoneNumber)).findFirst().orElse(null);
+
+
 	}
 
 	@Override

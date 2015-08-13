@@ -20,7 +20,7 @@ public class ConsoleUI {
 	 * @see readLine()
 	 */
 	private BufferedReader input = new BufferedReader(new InputStreamReader(System.in));
-	private RegisterLoader fileLoader = new FileRegisterLoader();
+	private RegisterLoader fileLoader = new TextFileRegisterLoader();
 	private RegisterLoader databaseLoader = new DatabaseRegisterLoader();
 	private SaveOption saveDestination;
 
@@ -44,6 +44,7 @@ public class ConsoleUI {
 	 * @throws FileNotFoundException
 	 */
 	public ConsoleUI() {
+		
 		if (databaseLoader.load() == null) {
 			if (fileLoader.load() == null) {
 				this.register = chooseRegister();
@@ -57,7 +58,6 @@ public class ConsoleUI {
 					this.register = chooseRegister();
 					saveDestination = SaveOption.NONE;
 				}
-
 			}
 		} else {
 			if (confirmLoadDatabase()) {
@@ -125,30 +125,31 @@ public class ConsoleUI {
 	
 	private void save(SaveOption option){
 		if(option == SaveOption.DATABASE){
-			saveToDatabase(register);
+			saveTo(databaseLoader);
 		} else if (option == SaveOption.FILE){
-			saveToFile(register);
-		} else {
-			return;
+			saveTo(fileLoader);
 		}
 	}
 	
-	private void saveToDatabase(Register register) {
+	private void saveTo(RegisterLoader loader) {
 		try {
-			databaseLoader.save(register);
+			loader.save(this.register);
 		} catch (Exception e) {
 			e.printStackTrace();
-			System.err.println("Something gone wrong, register has not been saved to Database.");
+			System.err.println("Something gone wrong, register has not been saved by " + loader);
 		}
 	}
-
-	private void saveToFile(Register register) {
+	// NOT IMPLEMENTED YET
+	private RegisterLoader loadRegisterFrom() {
+		int index = 0;
+		
+		System.out.println("There was found saved register, what do you want to do ?");
 		try {
-			fileLoader.save(register);
-		} catch (Exception e) {
-			e.printStackTrace();
-			System.err.println("Something gone wrong, register has not been saved to File.");
+			index = Integer.parseInt(readLine());
+		} catch (NumberFormatException e) {
+			System.err.println("Wrong format, please start again.");
 		}
+		return null;
 	}
 
 	private boolean confirmLoadDatabase() {
