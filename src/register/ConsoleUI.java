@@ -20,8 +20,9 @@ public class ConsoleUI {
 	 * @see readLine()
 	 */
 	private BufferedReader input = new BufferedReader(new InputStreamReader(System.in));
-	private RegisterLoader fileLoader = new TextFileRegisterLoader();
+	private RegisterLoader textfileLoader = new TextFileRegisterLoader();
 	private RegisterLoader databaseLoader = new DatabaseRegisterLoader();
+	private FileRegisterLoader fileLoader = new FileRegisterLoader();
 	private SaveOption saveDestination;
 
 	/**
@@ -30,9 +31,9 @@ public class ConsoleUI {
 	private enum Option {
 		PRINT, ADD, UPDATE, REMOVE, FIND, SAVE, EXIT
 	};
-	
+
 	private enum SaveOption {
-		DATABASE, FILE, NONE
+		DATABASE, TEXTFILE, FILE, NONE
 	};
 
 	/**
@@ -44,37 +45,7 @@ public class ConsoleUI {
 	 * @throws FileNotFoundException
 	 */
 	public ConsoleUI() {
-		
-		if (databaseLoader.load() == null) {
-			if (fileLoader.load() == null) {
-				this.register = chooseRegister();
-				// addSomePersons
-			} else {
-				if (confirmLoadFile()) {
-					this.register = fileLoader.load();
-					System.out.println("Register was loaded from File.");
-					saveDestination = SaveOption.FILE;
-				} else {
-					this.register = chooseRegister();
-					saveDestination = SaveOption.NONE;
-				}
-			}
-		} else {
-			if (confirmLoadDatabase()) {
-				this.register = databaseLoader.load();
-				System.out.println("Register was loaded from Database.");
-				saveDestination = SaveOption.DATABASE;
-			} else {
-				if (fileLoader.load() != null && confirmLoadFile()) {
-					this.register = fileLoader.load();
-					System.out.println("Register was loaded from File.");
-					saveDestination = SaveOption.FILE;
-				} else {
-					this.register = chooseRegister();
-					saveDestination = SaveOption.NONE;
-				}
-			}
-		}
+		loadRegisterFrom();
 	}
 
 	/**
@@ -102,7 +73,7 @@ public class ConsoleUI {
 				chooseSaveDestination();
 				break;
 			case EXIT:
-				save(saveDestination);
+				save();
 				return;
 			}
 		}
@@ -114,112 +85,116 @@ public class ConsoleUI {
 	 * @return
 	 */
 	private String readLine() {
-		// In JDK 6.0 and above Console class can be used
-		// return System.console().readLine();
 		try {
 			return input.readLine();
 		} catch (IOException e) {
 			return null;
 		}
 	}
-	
-	private void save(SaveOption option){
-		if(option == SaveOption.DATABASE){
+
+	private void save() {
+		if (saveDestination == SaveOption.DATABASE) {
 			saveTo(databaseLoader);
-		} else if (option == SaveOption.FILE){
+		} else if (saveDestination == SaveOption.TEXTFILE) {
+			saveTo(textfileLoader);
+		} else if (saveDestination == SaveOption.FILE) {
 			saveTo(fileLoader);
+		} else {
+			return;
 		}
 	}
-	
+
 	private void saveTo(RegisterLoader loader) {
 		try {
 			loader.save(this.register);
 		} catch (Exception e) {
 			e.printStackTrace();
-			System.err.println("Something gone wrong, register has not been saved by " + loader);
+			System.err.println("Something is wrong, register has not been saved by " + loader);
 		}
 	}
-	// NOT IMPLEMENTED YET
-	private RegisterLoader loadRegisterFrom() {
+
+	private void loadRegisterFrom() {
 		int index = 0;
-		
-		System.out.println("There was found saved register, what do you want to do ?");
-		try {
-			index = Integer.parseInt(readLine());
-		} catch (NumberFormatException e) {
-			System.err.println("Wrong format, please start again.");
+		out.println("There was found saved register, what do you want to load ?");
+		int i = 0;
+		String[] loader = new String[5];
+		String chosenLoader = "";
+		if (databaseLoader.load() != null) {
+			loader[++i] = "Database";
+			out.println(i + ". Database");
 		}
-		return null;
-	}
-
-	private boolean confirmLoadDatabase() {
-		int index = 0;
-		System.out.println("There was found database with register, do you want to load it ?\n1. Yes\n2. No");
-
+		if (textfileLoader.load() != null) {
+			loader[++i] = "TextFile";
+			out.println(i + ". TextFile");
+		}
+		if (fileLoader.load() != null) {
+			loader[++i] = "File";
+			out.println(i + ". File (binary)");
+		}
+		loader[++i] = "Create";
+		out.println(i + ". Create new Register");
 		do {
 			try {
 				index = Integer.parseInt(readLine());
 			} catch (NumberFormatException e) {
 				System.err.println("Wrong format, please start again.");
 			}
-			switch (index) {
-			case 1:
-				this.register = databaseLoader.load();
-				return true;
-			case 2:
-				return false;
-			default:
-				System.err.println("Wrong index, please choose again.");
-			}
-		} while (index < 1 && index > 2);
-		return false;
-	}
-
-	private boolean confirmLoadFile() {
-		int index = 0;
-		System.out.println("There was found file with register, do you want to load it ?\n1. Yes\n2. No");
-		do {
 			try {
-				index = Integer.parseInt(readLine());
-			} catch (NumberFormatException e) {
-				System.err.println("Wrong format or index, please start again.");
+				chosenLoader = loader[index]; // TODO: OPRAVIT
+												// --------------------------------------------------------------------------
+			} catch (ArrayIndexOutOfBoundsException e) {
 			}
-			switch (index) {
-			case 1:
+			if (chosenLoader == "Database") {
 				this.register = databaseLoader.load();
-				return true;
-			case 2:
-				return false;
+				this.saveDestination = SaveOption.DATABASE;
 			}
-		} while (index < 1 && index > 2);
-		return false;
+			if (chosenLoader == "TextFile") {
+				this.register = textfileLoader.load();
+				this.saveDestination = SaveOption.TEXTFILE;
+			}
+			if (chosenLoader == "File") {
+				this.register = fileLoader.load();
+				this.saveDestination = SaveOption.FILE;
+			}
+			if (chosenLoader == "Create") {
+				this.register = createRegister();
+				this.saveDestination = SaveOption.NONE;
+			}
+		} while (index < 1 || index > i);
 	}
 
 	private void chooseSaveDestination() {
 		int index = 0;
-		System.out
-				.println("Where do you want to save register ?\n1. Database\n2. File\n3. I dont want to save register");
+		out.println(
+				"Where do you want to save register ?\n1. Database\n2. TextFile\n3. File\n4. I dont want to save register");
+		out.println("Current save destination is: " + saveDestination);
 		do {
 			try {
 				index = Integer.parseInt(readLine());
 			} catch (NumberFormatException e) {
 				System.err.println("Wrong format, please start again.");
 			}
-			switch(index){
+			switch (index) {
 			case 1:
 				saveDestination = SaveOption.DATABASE;
+				save();
 				return;
 			case 2:
-				saveDestination = SaveOption.FILE;
+				saveDestination = SaveOption.TEXTFILE;
+				save();
 				return;
 			case 3:
+				saveDestination = SaveOption.FILE;
+				save();
+				return;
+			case 4:
 				saveDestination = SaveOption.NONE;
 				return;
 			}
-		} while (index < 1 && index > 3);
+		} while (index < 1 || index > 4);
 	}
 
-	private Register chooseRegister() {
+	private Register createRegister() {
 		int index = 0;
 		System.out.println(
 				"Choose type of register:\n------------------------\n1. ListRegister\n2. ArrayRegister (without sorting)");
@@ -275,8 +250,6 @@ public class ConsoleUI {
 			System.err.println("Register does not contain any persons");
 			return;
 		}
-		// StringBuilder builder = new StringBuilder();
-
 		int length = register.getCount();
 		int nameLength = register.getMaxLengthName();
 		int numberLength = register.getMaxLengthNumber();
@@ -291,8 +264,6 @@ public class ConsoleUI {
 			out.format("%1$2s. %4$s %2$-" + nameLength + "s %4$s %3$-" + numberLength + "s %n", i + 1,
 					register.getPerson(i).getName(), register.getPerson(i).getPhoneNumber(), "|");
 		}
-		// out.close();
-		// System.out.println(builder);
 	}
 
 	/**
